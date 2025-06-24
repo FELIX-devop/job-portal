@@ -17,11 +17,14 @@ const Login = () => {
       const res = await axios.post('http://localhost:8080/api/auth/login', {
         email,
         password,
+        role,
       });
       const user = res.data.user;
+      // Ensure MongoDB _id is always available as 'id'
+      const userWithId = { ...user, id: user._id || user.id };
       localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(user));
-      if (user.role === 'WORKER') {
+      localStorage.setItem('user', JSON.stringify(userWithId));
+      if (userWithId.role === 'WORKER') {
         navigate('/worker/dashboard');
       } else {
         navigate('/contractor/dashboard');

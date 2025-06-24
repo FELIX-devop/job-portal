@@ -99,16 +99,22 @@ public class AuthService {
     
     public Map<String, Object> login(LoginRequest request) {
         Map<String, Object> response = new HashMap<>();
-        
         try {
-            // First check in UserRepository (for contractors)
-            User user = userRepository.findByEmail(request.getEmail())
-                    .orElse(null);
-            
-            // If not found in UserRepository, check in WorkerRepository
-            if (user == null) {
-                Worker worker = workerRepository.findByEmail(request.getEmail())
-                        .orElse(null);
+            String role = request.getRole();
+            if ("CONTRACTOR".equalsIgnoreCase(role)) {
+                // Only check UserRepository
+                User user = userRepository.findByEmail(request.getEmail()).orElse(null);
+                if (user != null && passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+                    String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+                    response.put("success", true);
+                    response.put("token", token);
+                    response.put("user", user);
+                    response.put("message", "Login successful");
+                    return response;
+                }
+            } else if ("WORKER".equalsIgnoreCase(role)) {
+                // Only check WorkerRepository
+                Worker worker = workerRepository.findByEmail(request.getEmail()).orElse(null);
                 if (worker != null && passwordEncoder.matches(request.getPassword(), worker.getPassword())) {
                     String token = jwtUtil.generateToken(worker.getEmail(), worker.getRole().name());
                     response.put("success", true);
@@ -117,25 +123,17 @@ public class AuthService {
                     response.put("message", "Login successful");
                     return response;
                 }
-            } else if (passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                // User found in UserRepository and password matches
-                String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-                response.put("success", true);
-                response.put("token", token);
-                response.put("user", user);
-                response.put("message", "Login successful");
+            } else {
+                response.put("success", false);
+                response.put("message", "Invalid role selected");
                 return response;
             }
-            
-            // If we reach here, either user not found or password doesn't match
             response.put("success", false);
             response.put("message", "Invalid email or password");
-            
         } catch (Exception e) {
             response.put("success", false);
             response.put("message", "Login failed: " + e.getMessage());
         }
-        
         return response;
     }
 } 

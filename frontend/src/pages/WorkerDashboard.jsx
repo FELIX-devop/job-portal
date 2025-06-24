@@ -34,7 +34,14 @@ const WorkerDashboard = () => {
 
   const fetchJobOffers = async (workerId) => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/job-offers/worker/${workerId}`);
+      const response = await axios.get(
+        `http://localhost:8080/api/job-offers/worker/${workerId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
       setJobOffers(response.data);
     } catch (error) {
       console.error('Error fetching job offers:', error);
@@ -49,7 +56,15 @@ const WorkerDashboard = () => {
 
   const handleJobOfferResponse = async (offerId, status) => {
     try {
-      await axios.put(`http://localhost:8080/api/job-offers/${offerId}/status?status=${status}`);
+      await axios.put(
+        `http://localhost:8080/api/job-offers/${offerId}/status?status=${status}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
       fetchJobOffers(user.id);
     } catch (error) {
       console.error('Error updating job offer:', error);

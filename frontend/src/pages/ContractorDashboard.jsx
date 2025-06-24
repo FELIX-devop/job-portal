@@ -19,6 +19,8 @@ const ContractorDashboard = () => {
     duration: '',
     sentVia: 'PORTAL'
   });
+  const [jobOfferError, setJobOfferError] = useState('');
+  const [jobOfferSuccess, setJobOfferSuccess] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,7 +45,14 @@ const ContractorDashboard = () => {
 
   const fetchJobOffers = async (contractorId) => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/job-offers/contractor/${contractorId}`);
+      const response = await axios.get(
+        `http://localhost:8080/api/job-offers/contractor/${contractorId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
       setJobOffers(response.data);
     } catch (error) {
       console.error('Error fetching job offers:', error);
@@ -66,11 +75,21 @@ const ContractorDashboard = () => {
   };
 
   const handleSendJobOffer = async () => {
+    setJobOfferError('');
+    setJobOfferSuccess('');
     try {
-      await axios.post(`http://localhost:8080/api/job-offers/send?contractorId=${user.id}`, {
-        workerId: selectedWorker.id,
-        ...jobOfferData
-      });
+      await axios.post(
+        `http://localhost:8080/api/job-offers/send?contractorId=${user.id}`,
+        {
+          workerId: selectedWorker.id,
+          ...jobOfferData
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`
+          }
+        }
+      );
       setShowJobOfferModal(false);
       setSelectedWorker(null);
       setJobOfferData({
@@ -81,9 +100,10 @@ const ContractorDashboard = () => {
         duration: '',
         sentVia: 'PORTAL'
       });
+      setJobOfferSuccess('Job offer sent successfully!');
       fetchJobOffers(user.id);
     } catch (error) {
-      console.error('Error sending job offer:', error);
+      setJobOfferError(error.response?.data?.message || 'Failed to send job offer');
     }
   };
 
@@ -404,6 +424,12 @@ const ContractorDashboard = () => {
                 </select>
               </div>
             </div>
+            {jobOfferError && (
+              <div className="mb-2 p-2 bg-error-50 border border-error-200 rounded text-error-700 text-sm">{jobOfferError}</div>
+            )}
+            {jobOfferSuccess && (
+              <div className="mb-2 p-2 bg-success-50 border border-success-200 rounded text-success-700 text-sm">{jobOfferSuccess}</div>
+            )}
             <div className="flex space-x-4 mt-6">
               <button
                 onClick={() => setShowJobOfferModal(false)}
